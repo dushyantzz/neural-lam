@@ -10,6 +10,7 @@ from pathlib import Path
 # Third-party
 import pytorch_lightning as pl
 import torch
+from loguru import logger
 from pytorch_lightning.loggers import MLFlowLogger, WandbLogger
 from pytorch_lightning.utilities import rank_zero_only
 from torch import nn
@@ -288,20 +289,55 @@ $E=mc^2$ \LaTeX\ ok
         return False
 
 
-def fractional_plot_bundle(fraction):
+def fractional_plot_bundle(fraction: float) -> dict:
     """
-    Get the tueplots bundle, but with figure width as a fraction of
-    the page width.
+    Return a `tueplots` NeurIPS 2023 bundle with the figure width scaled by
+    a given fraction of the default page width.
+
+    Parameters
+    ----------
+    fraction : float
+        Multiplier applied to the default figure width. A value of ``1.0``
+        leaves the width unchanged, ``0.5`` halves it, and ``2.0`` doubles it.
+        Must be strictly positive.
+
+    Returns
+    -------
+    dict
+        A `matplotlib.rcParams`-compatible dictionary that can be used with
+        ``matplotlib.rc_context`` or ``matplotlib.rcParams.update``.
+        The ``\"figure.figsize\"`` entry is a ``(width, height)`` tuple with
+        the width scaled by ``fraction`` and the original height preserved.
+
+    Raises
+    ------
+    ValueError
+        If ``fraction`` is less than or equal to zero.
     """
+
+    if fraction <= 0:
+        raise ValueError(
+            f"fraction must be a positive float, got {fraction!r}."
+        )
 
     usetex = has_working_latex()
     bundle = bundles.neurips2023(usetex=usetex, family="serif")
     bundle.update(figsizes.neurips2023())
+
     original_figsize = bundle["figure.figsize"]
-    bundle["figure.figsize"] = (
-        original_figsize[0] / fraction,
-        original_figsize[1],
+    original_width, original_height = original_figsize
+
+    new_width = original_width * fraction
+    bundle["figure.figsize"] = (new_width, original_height)
+
+    logger.debug(
+        "fractional_plot_bundle: scaled figure width from {original_width} to "
+        "{new_width} using fraction={fraction}",
+        original_width=original_width,
+        new_width=new_width,
+        fraction=fraction,
     )
+
     return bundle
 
 

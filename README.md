@@ -418,6 +418,35 @@ If you would like to turn off W&B and just log things locally, run:
 wandb off
 ```
 
+### Plot styling and `fractional_plot_bundle`
+
+For publication-style figures, Neural-LAM uses
+[`tueplots`](https://github.com/patrick-kidger/tueplots) to configure
+Matplotlib's rcParams.
+The helper function `neural_lam.utils.fractional_plot_bundle` creates a
+NeurIPS 2023-style bundle and scales the figure width by a **fraction of the
+default page width**:
+
+- `fraction=1.0`: keep the default width.
+- `fraction=0.5`: half-width figure (good for side-by-side subplots).
+- `fraction=2.0`: double-width figure (spanning more horizontal space).
+
+Example usage:
+
+```python
+import matplotlib.pyplot as plt
+from neural_lam import utils
+
+with plt.rc_context(utils.fractional_plot_bundle(0.5)):
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1])
+    ax.set_title("Half-width figure using fractional_plot_bundle")
+    fig.savefig("example_half_width.png", dpi=300)
+```
+
+`fractional_plot_bundle` raises a `ValueError` if `fraction` is less than or
+equal to zero, as such values do not define a meaningful figure width.
+
 ### MLFlow Integration
 The project is also integrated with [MLFlow](https://mlflow.org/) for logging and storing artefacts.
 
